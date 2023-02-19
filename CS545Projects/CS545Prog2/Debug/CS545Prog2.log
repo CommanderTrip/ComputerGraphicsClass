@@ -1,6 +1,6 @@
 ﻿  main.cpp
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog2\main.cpp(84): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog2\main.cpp(173): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog2\main.cpp(264): warning C4065: switch statement contains 'default' but no 'case' labels
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog2\main.cpp(150): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog2\main.cpp(237): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog2\main.cpp(313): warning C4018: '<': signed/unsigned mismatch
   pch.cpp
   CS545Prog2.vcxproj -> C:\Users\jason\source\repos\ComputerGraphicsClass\CS545Projects\Debug\CS545Prog2.exe
