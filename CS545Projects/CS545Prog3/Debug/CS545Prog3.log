@@ -1,4 +1,9 @@
 ﻿  main.cpp
 c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\opengl445setup.h(26): warning C4244: 'argument': conversion from 'GLfloat' to 'GLsizei', possible loss of data
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(22): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(84): warning C4018: '<': signed/unsigned mismatch
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(113): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(117): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(131): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(140): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(146): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
   CS545Prog3.vcxproj -> C:\Users\jason\source\repos\ComputerGraphicsClass\CS545Projects\Debug\CS545Prog3.exe
