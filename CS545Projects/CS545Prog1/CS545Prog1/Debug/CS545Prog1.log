@@ -1,0 +1,9 @@
+﻿  main.cpp
+c:\users\jason\source\repos\cs545prog1\cs545prog1\main.cpp(112): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\jason\source\repos\cs545prog1\cs545prog1\main.cpp(131): warning C4244: 'argument': conversion from 'double' to 'GLint', possible loss of data
+c:\users\jason\source\repos\cs545prog1\cs545prog1\main.cpp(137): warning C4244: 'argument': conversion from 'double' to 'GLint', possible loss of data
+c:\users\jason\source\repos\cs545prog1\cs545prog1\main.cpp(138): warning C4244: 'argument': conversion from 'double' to 'GLint', possible loss of data
+c:\users\jason\source\repos\cs545prog1\cs545prog1\main.cpp(139): warning C4244: 'argument': conversion from 'double' to 'GLint', possible loss of data
+c:\users\jason\source\repos\cs545prog1\cs545prog1\main.cpp(264): warning C4065: switch statement contains 'default' but no 'case' labels
+  pch.cpp
+  CS545Prog1.vcxproj -> C:\Users\jason\source\repos\ComputerGraphicsClass\CS545Projects\Debug\CS545Prog1.exe

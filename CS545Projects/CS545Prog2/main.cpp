@@ -52,7 +52,7 @@
 
 // Pen and Canvas Colors
 #define PEN_BLACK 0.0, 0.0, 0.0
-#define PEN_WHITE 1.0, 1.0, 1.0
+#define PEN_VIOLET 1.0, 1.0, 1.0
 #define PEN_YELLOW 1.0, 1.0, 0.0
 #define PEN_YELLOWISH_ORANGE 1.0, 0.60, 0.0
 #define PEN_RED 1.0, 0.0, 0.0
@@ -283,7 +283,7 @@ void drawNests() {
 	Draws a white egg starting off the edge of the left nest.
 */
 void drawEgg() {
-	glColor3f(PEN_WHITE);
+	glColor3f(PEN_VIOLET);
 	glBegin(GL_LINE_LOOP);
 	glVertex2i(g_eggOriginX, g_eggOriginY + EGG_SIZE);
 	glVertex2i(g_eggOriginX - EGG_SIZE, g_eggOriginY);
@@ -405,8 +405,8 @@ void printFuel() {
 		print(fuel, GLUT_BITMAP_TIMES_ROMAN_24, PEN_RED, valueXPose, yPos);
 		break;
 	default:
-		print("Fuel: ", GLUT_BITMAP_TIMES_ROMAN_24, PEN_WHITE, titleXPos, yPos);
-		print(fuel, GLUT_BITMAP_TIMES_ROMAN_24, PEN_WHITE, valueXPose, yPos);
+		print("Fuel: ", GLUT_BITMAP_TIMES_ROMAN_24, PEN_VIOLET, titleXPos, yPos);
+		print(fuel, GLUT_BITMAP_TIMES_ROMAN_24, PEN_VIOLET, valueXPose, yPos);
 		break;
 	}
 }
@@ -416,14 +416,14 @@ void printFuel() {
 	listener listens for clicks within the region and pauses rightward movement.
 */
 void drawPauseButton() {
-	glColor3f(PEN_WHITE);
+	glColor3f(PEN_VIOLET);
 	glBegin(GL_LINE_LOOP);
 	glVertex2i(g_pauseButtonLeft, g_pauseButtonBottom);
 	glVertex2i(g_pauseButtonLeft, g_pauseButtonTop);
 	glVertex2i(g_pauseButtonRight, g_pauseButtonTop);
 	glVertex2i(g_pauseButtonRight, g_pauseButtonBottom);
 	glEnd();
-	print("Pause", GLUT_BITMAP_TIMES_ROMAN_24, PEN_WHITE, 20, CANVAS_HEIGHT-43);
+	print("Pause", GLUT_BITMAP_TIMES_ROMAN_24, PEN_VIOLET, 20, CANVAS_HEIGHT-43);
 }
 // END UTILITY FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // EVENT HANDLERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -555,7 +555,7 @@ void displayEventHandler() {
 	case false: // Draw the Introduction screen 
 		print("Press B To Begin", 
 			GLUT_BITMAP_TIMES_ROMAN_24, 
-			PEN_WHITE, 
+			PEN_VIOLET, 
 			CANVAS_WIDTH / 2 - strlen("Press B To Begin") * 5, 
 			CANVAS_HEIGHT / 2);
 		break;
