@@ -1,3 +1,27 @@
+/* CS 445/545 Prog 3 for Jason Carnahan 
+
+	Program Flow: 
+		Program starts in Main and registers `displayEventHandler` and 
+	`passiveMouseEventHandler`. `displayEventHandler` will clear the screen then 
+	draw the UI and all scene objects to the screen on each display event. 
+	`passiveMouseEventHandler` will register `keyboardEventHandler` when the user
+	moves their mouse over the "VELOCITY" text box and handle keyboard input; if 
+	the mouse is anywhere else, `changePerspective` is registered to only allow 
+	the user to change to-and-from Orthographic and Perspecitve views with "p". 
+	`passiveMouseEventHandler` will register `mouseClickEventHandler` when the 
+	user moves their mouse over the "GO" button and handle mouse clicks. When the
+	user clicks "GO", a timer event begins and registers the `timerEventHandler` 
+	with ID 0 to begin ring movement. When it triggers, the `timerEventHandler` 
+	will check 'g_ringYOffset' and 'g_yVelocity' to determine if the ring is on 
+	the floor. After hitting the floor, the ring will stop moving and 
+	`timerEventHandler` is registered with ID 1 to respawn the ring. After 
+	checking if the ring is on the floor, `timerEventHandler` will check the ring
+	position against the peg to see if we have a game winning condition and sets 
+	the ring's horizontal velocity ('g_xVelocity') to 0 then continues downward 
+	animation. This will continue until three tosses are made, then all handlers
+	are unregistered and "GAME OVER" is printed.
+*/
+
 #include "pch.h"
 #include <GL/glew.h>
 #include <GL/freeglut.h>
@@ -10,6 +34,7 @@
 
 // Physics and Win Condition Checks
 #define GRAVITY -32 // feet/sec/sec
+#define INITIAL_VELOCITY 5 // feet/sec
 #define PEG_X_AXIS 250
 #define RING_Y_AXIS -250
 #define WIN_DISTANCE 15
@@ -27,20 +52,22 @@
 #define PEN_ORANGE 1.0, 0.60, 0.0
 #define PEN_AQUA 0.0, 1.0, 1.0
 #define PEN_CLOUD 0.68, 0.82, 0.83
-#define PEN_DEBUG 0.61, 0.07, 0.83 // Color for testing; not for production use
+#define PEN_DEBUG 0.61, 0.07, 0.83
 #define CANVAS_BLACK 0.0, 0.0, 0.0, 1.0
 
 // Global Game Tracking
 int g_tossRound = 3; // Tracks which toss the player is on 
-char g_inputVelocity[2] = {};
 float g_ringXOffset = 0;
 float g_ringYOffset = 0;
 bool g_tossInProgress = false;
+bool g_currentView = 0; // 0 - Orthographic, 1 - Perspective 
 
 // Physics Tracking
+float g_xPosition = RING_START_X;
+float g_yPosition = RING_START_Y;
 float g_xVelocity = 0;
-float g_yVelocity = 5; // negative denotes direction
-float g_throwTimeElapsed = 0;
+float g_yVelocity = 5;
+float g_elapsedThrowTime = 0;
 
 // Misc. Details
 char canvas_name[] = "CS 445/545 Prog 3 for Jason Carnahan"; // Window title
@@ -62,6 +89,7 @@ int timerDelay = (int)1000 / targetFramerate; // Time delay between frames draws
 */
 void print(const char m[], void* f, float r, float g, float b, 
 	int x, int y, int z) {
+	glLoadIdentity();
 	glColor3f(r, g, b);
 	glRasterPos3i(x, y, z);
 	for (int i = 0; i < strlen(m); i++) {
@@ -70,6 +98,10 @@ void print(const char m[], void* f, float r, float g, float b,
 	glFlush(); // Messages would not appear without this
 }
 
+/*
+	Converts an integer to char using the ASCII table then uses the `print` 
+	utility function to print the text to the screen.
+*/
 void printHorizontalVelocity() {
 	int asciiBaseline = 48; // Int to Char follows the ASCII table
 
@@ -79,7 +111,8 @@ void printHorizontalVelocity() {
 	velocity[1] = (char)(
 		(((float)g_xVelocity/10.0) - (int)(g_xVelocity/10)) *10 + asciiBaseline);
 	velocity[2] = '\0';
-	print(velocity, GLUT_BITMAP_TIMES_ROMAN_24, PEN_WHITE, -265, -235, -1);
+	int zChange = !g_currentView ? -1 : -13;
+	print(velocity, GLUT_BITMAP_TIMES_ROMAN_24, PEN_WHITE, -265, -235, zChange);
 }
 
 /*
@@ -88,24 +121,26 @@ void printHorizontalVelocity() {
 	horizontal direction; therefore, no change in velocity in that direction. The
 	vertical direction is impacted by gravity; therefore, the velocity will 
 	increase.
-	v = integral(a(t)) = -32 * t
-	x = integral(v(t)) = -16 * t * t
+	v1 = integral(a(t)) = -32 * t + v0
+	x = integral(v(t)) = -16 * t * t + v1 * t
 */
 void updateRingMovement() {
-	g_throwTimeElapsed += timerDelay/1000.0; // Update timestep in seconds
+	g_elapsedThrowTime += timerDelay/1000.0; // Update timestep in seconds
 
-	g_yVelocity = GRAVITY * g_throwTimeElapsed; // Update vertical velocity
+	// Update vertical velocity
+	g_yVelocity = GRAVITY * g_elapsedThrowTime + INITIAL_VELOCITY;
 	// Horizontal velocity does not update
 
 	// Update Y position offset
-	g_ringYOffset = GRAVITY/2 * (g_throwTimeElapsed*g_throwTimeElapsed);
+	g_ringYOffset = g_yVelocity * g_elapsedThrowTime +
+		GRAVITY/2 * (g_elapsedThrowTime*g_elapsedThrowTime);
 
-	// Update X position offset
+	// Update X position offset, `if` for peg collision
 	if (g_xVelocity) {
-		g_ringXOffset = g_xVelocity/2 * (g_throwTimeElapsed*g_throwTimeElapsed);
+		g_ringXOffset = g_xVelocity * g_elapsedThrowTime +
+			g_xVelocity/2 * (g_elapsedThrowTime*g_elapsedThrowTime);
 	}
 }
-
 // END UTILITY FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // SCENE OBJECT FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /*
@@ -116,7 +151,6 @@ void updateRingMovement() {
 void drawPeg() {
 	int cubeSize = 12;
 	glColor3f(PEN_CLOUD);
-
 	for (int i = 0; i <= 4; i++) {
 		glLoadIdentity(); // Clear previous transformations
 		glTranslatef(250.0, -300.0 + (cubeSize/2 + 1) + (i * cubeSize), -50.0);
@@ -150,7 +184,9 @@ void drawRing() {
 		break;
 	default:
 		glColor3f(PEN_DEBUG);
-		print("GAME OVER", GLUT_BITMAP_HELVETICA_18, PEN_RED, -50, 0, 10);
+		int zChange = !g_currentView ? -1 : -13;
+		print("GAME OVER", GLUT_BITMAP_HELVETICA_18, PEN_RED, 
+			-100, RING_START_Y-10, zChange);
 		return;
 		break;
 	}
@@ -167,24 +203,25 @@ void drawRing() {
 void drawControls() {
 	glLoadIdentity();
 	glColor3f(PEN_WHITE);
+	int zChange = !g_currentView ? -1 : -13;
 	
 	// Draw Velocity Box
 	glBegin(GL_LINE_LOOP);
-	glVertex3i(-290, -200, -1);
-	glVertex3i(-290, -250, -1);
-	glVertex3i(-210, -250, -1);
-	glVertex3i(-210, -200, -1);
+	glVertex3i(-290, -200, zChange);
+	glVertex3i(-290, -250, zChange);
+	glVertex3i(-210, -250, zChange);
+	glVertex3i(-210, -200, zChange);
 	glEnd();
-	print("VELOCITY", GLUT_BITMAP_TIMES_ROMAN_10, PEN_WHITE, -290, -260, -1);
+	print("VELOCITY", GLUT_BITMAP_TIMES_ROMAN_10, PEN_WHITE, -290, -260, zChange);
 
 	// Draw Go Box
 	glBegin(GL_LINE_LOOP);
-	glVertex3i(-200, -225, -1);
-	glVertex3i(-200, -250, -1);
-	glVertex3i(-140, -250, -1);
-	glVertex3i(-140, -225, -1);
+	glVertex3i(-200, -225, zChange);
+	glVertex3i(-200, -250, zChange);
+	glVertex3i(-140, -250, zChange);
+	glVertex3i(-140, -225, zChange);
 	glEnd();
-	print("GO", GLUT_BITMAP_TIMES_ROMAN_24, PEN_WHITE, -188, -245, -1);
+	print("GO", GLUT_BITMAP_TIMES_ROMAN_24, PEN_WHITE, -188, -245, zChange);
 }
 // END SCENE OBJECT FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // EVENT HANDLERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -197,8 +234,9 @@ void displayEventHandler() {
 	glClearColor(CANVAS_BLACK); // Define background color
 	glClear(GL_COLOR_BUFFER_BIT); // Clear the background
 
+	int zChange = !g_currentView ? -1 : -13;
 	print("Enter Toss Velocity and then GO to Toss", GLUT_BITMAP_HELVETICA_18,
-		PEN_WHITE, -150, 275, -1);
+		PEN_WHITE, -150, 275, zChange);
 	
 	drawPeg();
 	drawRing();
@@ -209,19 +247,25 @@ void displayEventHandler() {
 	glFlush(); // Not including this caused issues for me
 }
 
+/*
+	Handles timer events that are triggered for animation.
+	Timer Event ID 0 - The ring is in the air; keep updating its position.
+	Timer Event ID 1 - The ring is on the floor; respawn it at the start.
+*/
 void timerEventHandler(int timerId) {
-	if (g_ringYOffset + RING_START_Y - 7.5 <= -300 && g_yVelocity != 0) {
-		// Hit the floor
+	// Check if the ring hit the floor
+	if (g_ringYOffset + RING_START_Y - 15 <= -300 && g_yVelocity != 0) {
 		g_yVelocity = 0;
 		glutTimerFunc(1000, timerEventHandler, 1);
 		return;
 	} 
+
+	// Check if the ring hit the peg
 	if ((g_ringYOffset + RING_START_Y - WIN_DISTANCE <= RING_Y_AXIS && 
 		g_ringXOffset + RING_START_X + WIN_DISTANCE >= PEG_X_AXIS) && (
 			g_ringYOffset + RING_START_Y + WIN_DISTANCE >= RING_Y_AXIS &&
 			g_ringXOffset + RING_START_X - WIN_DISTANCE <= PEG_X_AXIS)
 		) {
-		// Landed on the peg
 		g_xVelocity = 0;
 	}
 
@@ -235,7 +279,7 @@ void timerEventHandler(int timerId) {
 	case 1: // Respawn the Ring
 		g_tossInProgress = false;
 		g_tossRound--;
-		g_throwTimeElapsed = 0;
+		g_elapsedThrowTime = 0;
 		g_xVelocity = 0;
 		g_yVelocity = 5;
 		g_ringXOffset = 0;
@@ -248,6 +292,11 @@ void timerEventHandler(int timerId) {
 	glutPostRedisplay();
 }
 
+/*
+	Handles keyboard events. This is only registered if the user moves their 
+	cursor over the "VELOCITY" text box. Then, the user can type any number into 
+	the box, or any other key to 'backspace'.
+*/
 void keyboardEventHandler(unsigned char key, int x, int y) {
 	int keyAsDecimal = (int)key - 48;
 	switch (key) {
@@ -260,12 +309,12 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
 	case '7':
 	case '8':
 	case '9':
-	case '0':
+	case '0': // Adds value to text box
 		if (g_xVelocity < 1) g_xVelocity += keyAsDecimal;
 		else if (g_xVelocity >= 10) break;
 		else g_xVelocity = (int)(g_xVelocity * 10) + keyAsDecimal;
 		break;
-	default:
+	default: // Simulates a backspace
 		g_xVelocity /= 10;
 		g_xVelocity = (int)g_xVelocity;
 		break;
@@ -273,11 +322,53 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
+/*
+	This is another keyboard event handler but specifically for if the user's 
+	cursor is off of the "VELOCITY" text box.
+*/
+void changePerspective(unsigned char key, int x, int y) {
+	glLoadIdentity();
+	switch (key)
+	{
+	case 'p':
+	case 'P':
+		if (g_currentView == 0) { // Toggle to Perspective
+			g_currentView = 1;
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			gluPerspective(175.0, 1.0, 1.0, 100);
+			glMatrixMode(GL_MODELVIEW);
+		}
+		else { // Toggle to Orthographic
+			g_currentView = 0;
+			glViewport(0, 0, (GLfloat)CANVAS_WIDTH, (GLfloat)CANVAS_HEIGHT);
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glOrtho(-300.0, 300.0, -300.0, 300.0, 1, 100.0);
+			glMatrixMode(GL_MODELVIEW);
+		}
+	default:
+		break;
+	}
+	glutPostRedisplay();
+}
+
+/*
+	Handles if the user clicks their mouse in the "GO" button. When they do, 
+	animation flag is set and the animation timer begins.
+*/
 void mouseClickEventHandler(int button, int state, int x, int y) {
 	g_tossInProgress = true;
 	glutTimerFunc(timerDelay, timerEventHandler, 0);
 }
 
+/*
+	Handles passive mouse movement. Everytime the user moves their mouse, 
+	different event handlers COULD be registered. Most of the time, 
+	`changePerspective` is registered, but, when the user interacts with key 
+	elements, special behaviors are registered with `keyboardEventHandler` and
+	`mouseClickEventHandler`.
+*/
 void passiveMouseEventHandler(int x, int y) {
 	if (g_tossInProgress || g_tossRound <= 0) {
 		glutKeyboardFunc(NULL);
@@ -290,7 +381,7 @@ void passiveMouseEventHandler(int x, int y) {
 		glutKeyboardFunc(keyboardEventHandler);
 	}
 	else {
-		glutKeyboardFunc(NULL);
+		glutKeyboardFunc(changePerspective);
 	}
 
 	// If the cursor is in the bounds of the Go box, handle Clicking
@@ -303,7 +394,6 @@ void passiveMouseEventHandler(int x, int y) {
 	}
 }
 // END EVENT HANDLERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 /*
 	Goal of the game to toss a ring-like object onto a peg. User will have 3 
 	tosses and each ring that lands is 10 points.

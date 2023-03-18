@@ -1,12 +1,14 @@
 ﻿  main.cpp
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\opengl445setup.h(26): warning C4244: 'argument': conversion from 'GLfloat' to 'GLsizei', possible loss of data
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(67): warning C4018: '<': signed/unsigned mismatch
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(95): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(118): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(122): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(137): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(146): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(152): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(266): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(270): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\opengl445setup.h(22): warning C4244: 'argument': conversion from 'GLfloat' to 'GLsizei', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(95): warning C4018: '<': signed/unsigned mismatch
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(128): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(153): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(156): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(171): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(180): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(186): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(189): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(315): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(319): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\jason\source\repos\computergraphicsclass\cs545projects\cs545prog3\main.cpp(344): warning C4244: 'argument': conversion from 'GLfloat' to 'GLsizei', possible loss of data
   CS545Prog3.vcxproj -> C:\Users\jason\source\repos\ComputerGraphicsClass\CS545Projects\Debug\CS545Prog3.exe

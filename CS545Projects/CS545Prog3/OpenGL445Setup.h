@@ -16,12 +16,8 @@ that sets view parameters for orthographic 3D disaply.
 
 void my_3d_projection(int width, int height)
 {
-	/*
-	For Program 3, the viewing region is described from:
-		x = -300 to x = 300
-		y = -300 to y = 300
-		z = -1 to z = -100
-	*/
+	//For Program 3, the viewing region is described from:
+	//	x = -300 : 300, y = -300 : 300, z = -1 : -100
 
 	glViewport(0, 0, (GLfloat)width, (GLfloat)height);
 	glMatrixMode(GL_PROJECTION);

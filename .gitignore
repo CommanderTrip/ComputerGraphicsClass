@@ -25,3 +25,9 @@
 *.exe
 *.out
 *.app
+
+# Debug Output
+*.ilk
+*.pdb
+*.log
+*.tlog
