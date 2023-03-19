@@ -14,15 +14,21 @@
 #define PEN_WHITE 1.0, 1.0, 1.0
 #define CANVAS_BLACK 0.0, 0.0, 0.0, 1.0
 
-// Global X, Y, Z positions of objects
+// Global Transformations of objects
 float g_fishPosition[3] = { 0.0, 0.0, -175.0 }; 
 int g_fishHeading = 180; // Rotation over Z axis
-float g_foodPosition[3] = { 0.0, 0.0, 0.0 };
+float g_foodPosition[3] = { 
+	(float)rand() / RAND_MAX * 200 - 100,
+	(float)rand() / RAND_MAX * 200 - 100,
+	-175.0
+};
+int g_fanRotation = 0;
 
-// User Interface Text
-int g_asciiBaseline = 48; // ASCII 48 is 0; the first number
-int g_gameTimer = 30; // Game will last 30 seconds
+// Global Game Trackers 
+int g_foodSpawnTimer = 4000;
+int g_fishEnlargeTimer = 0;
 int g_gameScore = 0;
+int g_gameTimer = 30; // Game will last 30 seconds
 
 
 // Misc. Details
@@ -30,6 +36,26 @@ char canvas_name[] = "CS 445/545 Prog 4 for Jason Carnahan"; // Window title
 int targetFramerate = 25; // 25 frames per second, ~about 40 ms per frame
 int timerDelay = (int)1000 / targetFramerate; // Time delay between frames draws
 // UTILITY FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/*
+	Calculates the squared distance between two points and compares it against
+	the square of the max collision distance plus the sizes of both objects. This
+	simulates a circular region around each object and detects if the circles
+	collide.
+
+	This does not include the square root in distance calculation because square
+	root is computationally expensive and we only have ~30-40 ms between frames.
+
+	x1 - X position of the origin for the first object.
+	y1 - Y position of the origin for the first object.
+	size1 - Circular radius from the first object's origin.
+	x2 - X position of the origin for the second object.
+	y2 - Y position of the origin for the second object.
+	size2 - Circular radius from the second object's origin.
+*/
+bool collided(int x1, int y1, int x2, int y2) {
+	return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) < 2500 ? true : false;
+}
+
 /*
 	Changes the internal transformation matrix to be the one defined as inputs. 
 	If nothing is passed, the identity matrix is applied.
@@ -69,12 +95,17 @@ void print(const char m[], void* f, float r, float g, float b,
 	glFlush(); // Messages would not appear without this
 }
 
-void printIntToChar(int input, int xPos, int yPos, int zPos) {
-	char dissect[3];
-	dissect[0] = (char)(g_asciiBaseline + input / 10);
-	dissect[1] = (char)
-		( (((float)input / 10.0) - (int)(input / 10)) * 10 + g_asciiBaseline);
-	dissect[2] = '\0';
+void printAnyPositiveIntToChar(int input, int xPos, int yPos, int zPos) {
+	int asciiBaseline = 48; // ASCII 48 is 0 - the first number
+	char dissect[100] = "";
+	if (!input) dissect[0] = '0';
+	while (input) {
+		float temp = (float)input / 10;
+		input /= 10;
+		char value[100] = { (char)(((temp - input) * 10) + asciiBaseline)};
+		strcat_s(value, dissect);
+		strcpy_s(dissect, value);
+	}
 	print(dissect, GLUT_BITMAP_TIMES_ROMAN_24, PEN_WHITE, xPos, yPos, zPos);
 }
 // END UTILITY FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,17 +118,25 @@ void printIntToChar(int input, int xPos, int yPos, int zPos) {
 void drawFish() {
 	int fishHalfX = 37;
 	int fishHalfYZ = 12;
+
+	float fishEnlarge = 0;
+	if (g_fishEnlargeTimer) fishEnlarge = 8; // 10% of 75 rounded up 
+
 	glColor3f(PEN_ORANGE);
 
 	// Fish Body
-	transform(g_fishPosition[0], g_fishPosition[1], g_fishPosition[2],
+	transform(
+		g_fishPosition[0], g_fishPosition[1], g_fishPosition[2],
 		g_fishHeading, 0, 0, 1,
-		fishHalfX, fishHalfYZ, fishHalfYZ);
+		fishHalfX + fishEnlarge,
+		fishHalfYZ + fishEnlarge,
+		fishHalfYZ + fishEnlarge);
 	glutWireOctahedron();
 
 	// Fish Tail
 	transform(g_fishPosition[0], g_fishPosition[1], g_fishPosition[2],
-		g_fishHeading+180, 0, 0, 1);
+		g_fishHeading+180, 0, 0, 1, 
+		1+fishEnlarge/32, 1+fishEnlarge/32, 1+fishEnlarge/32);
 	glBegin(GL_LINE_LOOP);
 	glVertex2f(fishHalfX, 0);
 	glVertex2f(fishHalfX + 9, fishHalfYZ);
@@ -106,10 +145,43 @@ void drawFish() {
 }
 
 /*
-	The food are white spheres of diameter 10 units.
+	The food are white spheres of diameter 10 units. Food remains in position for
+	3 seconds. At the 4th, it will spawn at a new location. It will respawn 1 
+	second after being eaten.
 */
+void timerEventHandler(int timerId);
 void drawFood() {
+	// Check for fish and food collision
+	if (collided(
+		g_fishPosition[0], g_fishPosition[1],
+		g_foodPosition[0], g_foodPosition[1]
+	)) {
+		g_foodSpawnTimer = 999;
+		glutTimerFunc(1000, timerEventHandler, 4);
+		g_gameScore += 10;
+	}
 
+	if (g_foodSpawnTimer < 1000 && g_foodSpawnTimer > 0) { // Hide Food 
+		g_foodPosition[0] = 500;
+		g_foodPosition[1] = 500;
+	}
+	else if (g_foodSpawnTimer < 0) { // Respawn Food
+		g_foodPosition[0] = g_fishPosition[0];
+		g_foodPosition[1] = g_fishPosition[1];
+		// Dont spawn new food too close to the fish
+		while (collided(
+			g_fishPosition[0], g_fishPosition[1],
+			g_foodPosition[0], g_foodPosition[1]
+		)) {
+			g_foodPosition[0] = (float)rand() / RAND_MAX * 200 - 100;
+			g_foodPosition[1] = (float)rand() / RAND_MAX * 200 - 100;
+		}
+		g_foodSpawnTimer = 4000;
+	}
+
+	glColor3f(PEN_WHITE);
+	transform(g_foodPosition[0], g_foodPosition[1], g_foodPosition[2]);
+	glutWireSphere(10, 5, 5);
 }
 
 /*
@@ -120,22 +192,37 @@ void drawFood() {
 	make one spin.
 */
 void drawFan() {
+	glColor3f(PEN_YELLOW);
 
+	for (int i = 0; i < 6; i++) {
+		int rotation = i * 60;
+		if (rotation > 360) rotation -= 360;
+
+		transform(0, 0, -300, rotation + g_fanRotation, 0, 0, 1);
+		glBegin(GL_LINE_LOOP);
+		glVertex2i(0, 0);
+		glVertex2i(50, 10);
+		glVertex2i(50, -10);
+		glEnd();
+	}
 }
 
 /*
-	Fish tank is a 250x250x250 axially aligned white wire cube with the front 
+	Fish tank is a 250x250x250 axially aligned yellow wire cube with the front 
 	face at z = -50.
 */
 void drawTank() {
 	transform(0,0,-175); // 250 / 2 = 125; 125 + 50 = 175
-	glColor3f(PEN_WHITE);
+	glColor3f(PEN_YELLOW);
 	glutWireCube(250);
 }
 
 void drawUI() {
-	print("SECONDS REMAINING:", GLUT_BITMAP_TIMES_ROMAN_24,PEN_WHITE, 0, 350, 0);
-	printIntToChar(g_gameTimer, 135, 350, 0);
+	print("SECONDS REMAINING", GLUT_BITMAP_TIMES_ROMAN_24,PEN_WHITE, 0, 350, 0);
+	printAnyPositiveIntToChar(g_gameTimer, 134, 350, 0);
+
+	print("SCORE", GLUT_BITMAP_TIMES_ROMAN_24, PEN_WHITE, -250, 300, 0);
+	printAnyPositiveIntToChar(g_gameScore, -225, 280, 0);
 }
 // END SCENE OBJECT FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // EVENT HANDLERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -145,9 +232,12 @@ void displayEventHandler() {
 
 	drawFish();
 	drawTank();
+	drawFan();
 	drawUI();
+	drawFood();
 
 	// Execute the draw
+	glutSwapBuffers();
 	glFlush(); // Not including this caused issues for me
 }
 
@@ -155,13 +245,13 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'u': // Move Fish Up
 	case 'U':
-		g_fishHeading = 90;
+		//g_fishHeading = 90;
 		g_fishPosition[1] += 10;
 		if (g_fishPosition[1] >= 125) g_fishPosition[1] = 125;
 		break;
 	case 'n': // Move Fish Down 
 	case 'N':
-		g_fishHeading = 270;
+		//g_fishHeading = 270;
 		g_fishPosition[1] -= 10;
 		if (g_fishPosition[1] <= -125) g_fishPosition[1] = -125;
 		break;
@@ -184,15 +274,36 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
 }
 
 void timerEventHandler(int timerId) {
+	if (!g_gameTimer) {
+		glutKeyboardFunc(NULL);
+		return;
+	}
 	switch (timerId) {
 	case 1: // Game timer countdown
 		g_gameTimer--;
 		if (g_gameTimer < 0) {
-			glutKeyboardFunc(NULL);
+			g_gameTimer = 0;
 			return;
 		}
 		glutTimerFunc(1000, timerEventHandler, 1);
 		break;
+	case 2: // Fan spinning
+		g_fanRotation += 7; // 7.2 degrees every frame@25fps meets 360 in 2 sec
+		if (g_fanRotation > 360) g_fanRotation -= 360;
+		glutTimerFunc(timerDelay, timerEventHandler, 2);
+		break;
+	case 3: // Change Food timer
+		g_foodSpawnTimer -= timerDelay;
+		glutTimerFunc(timerDelay, timerEventHandler, 3);
+		break;
+	case 4: // Enlarge Fish timer
+		if (!g_fishEnlargeTimer) g_fishEnlargeTimer = 1000;
+		g_fishEnlargeTimer -= timerDelay;
+		if (g_fishEnlargeTimer <= 0) {
+			g_fishEnlargeTimer = 0;
+			return;
+		}
+		glutTimerFunc(timerDelay, timerEventHandler, 4);
 	default:
 		break;
 	}
@@ -209,7 +320,10 @@ int main(int argc, char ** argv) {
 
 	glutDisplayFunc(displayEventHandler);
 	glutKeyboardFunc(keyboardEventHandler);
-	glutTimerFunc(1000, timerEventHandler, 1);
+
+	glutTimerFunc(1000, timerEventHandler, 1); // Start Game Timer
+	glutTimerFunc(timerDelay, timerEventHandler, 2); // Start Fan Spinning
+	glutTimerFunc(timerDelay, timerEventHandler, 3); // Start Food spawning
 
 	// Start
 	glutMainLoop(); /* execute until killed */
