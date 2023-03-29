@@ -1,3 +1,25 @@
+/* CS 445/545 Prog 4 for Jason Carnahan 
+
+	EXTRA CREDIT - Fish heading
+	EXTRA CREDIT - Fish enlargement
+	
+Architecture Statement:
+	There are three major event handlers in this program. `displayEventHandler`,
+	`keyboardEventHandler`, and `timerEventHandler` all handle their namesake 
+	events. On program start, `main` will register `displayEventHandler` to begin
+	drawing objects to the screen and `keyboardEventHandler` to control the 
+	position of the fish on "U, H, J, N" keyboard events. `main` will also 
+	register the `timerEventHandler` with three different timer IDs: 1 for the 
+	overall game timer, 2 for independant fan rotation, and 3 for independantly 
+	spawning the fish food. When each these timers occur, they reregister 
+	themselves at different intervals. When the `displayEventHandler` draws the 
+	fish food, it check itself to see if the fish object has collided with the 
+	fish food object. If it has, another `timerEventHandler` will be registered 
+	with ID 4: timer to enlarge the fish. Then the food will begin its respawning
+	action and the user's score will be increased. These timer events will loop 
+	until the game timer is zero upon which the timer events will all halt and 
+	the `keyboardEventHandler` is unregistered to freeze the game in place. 
+*/
 #include "pch.h"
 #include <GL/glew.h>
 #include <GL/freeglut.h>
@@ -58,7 +80,8 @@ bool collided(int x1, int y1, int x2, int y2) {
 
 /*
 	Changes the internal transformation matrix to be the one defined as inputs. 
-	If nothing is passed, the identity matrix is applied.
+	If nothing is passed, the identity matrix is applied. This guarantees that
+	developers are always applying transformations in the same way.
 */
 void transform(
 	float translateX = 0.0, float translateY = 0.0, float translateZ = 0.0,
@@ -95,6 +118,11 @@ void print(const char m[], void* f, float r, float g, float b,
 	glFlush(); // Messages would not appear without this
 }
 
+/*
+	This will take any positive integer and print it as a char to the screen.
+	input - The positive integer to print.
+	xPos, yPos, zPos - Integers that describe where on the screen to put the int.
+*/
 void printAnyPositiveIntToChar(int input, int xPos, int yPos, int zPos) {
 	int asciiBaseline = 48; // ASCII 48 is 0 - the first number
 	char dissect[100] = "";
@@ -111,17 +139,15 @@ void printAnyPositiveIntToChar(int input, int xPos, int yPos, int zPos) {
 // END UTILITY FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // SCENE OBJECT FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /*
-	The fish is to be modeled as an octahedron (wire frame) with a triangular 
+	The fish is to be modeled as an octahedron wire frame with a triangular 
 	tail. That octahedron is 75 units wide, 25 units tall, and 25 units deep. The
 	tail is 15 units wide and is attached to the body at the tip of the triangle.
 */
 void drawFish() {
 	int fishHalfX = 37;
 	int fishHalfYZ = 12;
-
 	float fishEnlarge = 0;
 	if (g_fishEnlargeTimer) fishEnlarge = 8; // 10% of 75 rounded up 
-
 	glColor3f(PEN_ORANGE);
 
 	// Fish Body
@@ -153,9 +179,9 @@ void timerEventHandler(int timerId);
 void drawFood() {
 	// Check for fish and food collision
 	if (collided(
-		g_fishPosition[0], g_fishPosition[1],
-		g_foodPosition[0], g_foodPosition[1]
-	)) {
+		g_fishPosition[0], g_fishPosition[1], 
+		g_foodPosition[0], g_foodPosition[1] ))
+	{ // Collision detected; begin respawn
 		g_foodSpawnTimer = 999;
 		glutTimerFunc(1000, timerEventHandler, 4);
 		g_gameScore += 10;
@@ -193,11 +219,9 @@ void drawFood() {
 */
 void drawFan() {
 	glColor3f(PEN_YELLOW);
-
 	for (int i = 0; i < 6; i++) {
 		int rotation = i * 60;
 		if (rotation > 360) rotation -= 360;
-
 		transform(0, 0, -300, rotation + g_fanRotation, 0, 0, 1);
 		glBegin(GL_LINE_LOOP);
 		glVertex2i(0, 0);
@@ -217,6 +241,9 @@ void drawTank() {
 	glutWireCube(250);
 }
 
+/*
+	Draws all the text to the screen.
+*/
 void drawUI() {
 	print("SECONDS REMAINING", GLUT_BITMAP_TIMES_ROMAN_24,PEN_WHITE, 0, 350, 0);
 	printAnyPositiveIntToChar(g_gameTimer, 134, 350, 0);
@@ -226,6 +253,9 @@ void drawUI() {
 }
 // END SCENE OBJECT FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // EVENT HANDLERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/*
+	Handles display events and draws all the necessary objects to the screen.
+*/
 void displayEventHandler() {
 	glClearColor(CANVAS_BLACK); // Define background color
 	glClear(GL_COLOR_BUFFER_BIT); // Clear the background
@@ -241,17 +271,19 @@ void displayEventHandler() {
 	glFlush(); // Not including this caused issues for me
 }
 
+/*
+	Handles keyboard events. The only actions to handle are moving the fish. The
+	only keys to handle are 'U, N, H, J' for moving the fish.
+*/
 void keyboardEventHandler(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'u': // Move Fish Up
-	case 'U':
-		//g_fishHeading = 90;
+	case 'U': 
 		g_fishPosition[1] += 10;
 		if (g_fishPosition[1] >= 125) g_fishPosition[1] = 125;
 		break;
 	case 'n': // Move Fish Down 
 	case 'N':
-		//g_fishHeading = 270;
 		g_fishPosition[1] -= 10;
 		if (g_fishPosition[1] <= -125) g_fishPosition[1] = -125;
 		break;
@@ -273,11 +305,21 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
+/*
+	Handle all timer events.
+	timerId 1 - Handle countdown timer.
+	timerId 2 - Handle the rotating fan.
+	timerId 3 - Handle food spawn timer.
+	timerId 4 - Handle fish enlargement timer.
+*/
 void timerEventHandler(int timerId) {
+	// Game ends so stop all timers
 	if (!g_gameTimer) {
 		glutKeyboardFunc(NULL);
 		return;
 	}
+
+	// Handle in-game timers
 	switch (timerId) {
 	case 1: // Game timer countdown
 		g_gameTimer--;
@@ -311,7 +353,7 @@ void timerEventHandler(int timerId) {
 }
 // END EVENT HANDLERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /*
-	This is a simple game where a fish in a fish tank are fed.
+	This is a simple game where a user controls a fish to collect food.
 */
 int main(int argc, char ** argv) {
 	// Setup Environment
