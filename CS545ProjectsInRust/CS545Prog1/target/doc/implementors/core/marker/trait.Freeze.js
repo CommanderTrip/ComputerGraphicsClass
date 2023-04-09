@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"gl":[["impl Freeze for <a class=\"enum\" href=\"gl/types/enum.__GLsync.html\" title=\"enum gl::types::__GLsync\">__GLsync</a>",1,["gl::types::__GLsync"]],["impl Freeze for <a class=\"enum\" href=\"gl/types/enum._cl_context.html\" title=\"enum gl::types::_cl_context\">_cl_context</a>",1,["gl::types::_cl_context"]],["impl Freeze for <a class=\"enum\" href=\"gl/types/enum._cl_event.html\" title=\"enum gl::types::_cl_event\">_cl_event</a>",1,["gl::types::_cl_event"]],["impl Freeze for <a class=\"struct\" href=\"gl/struct.FnPtr.html\" title=\"struct gl::FnPtr\">FnPtr</a>",1,["gl::FnPtr"]]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

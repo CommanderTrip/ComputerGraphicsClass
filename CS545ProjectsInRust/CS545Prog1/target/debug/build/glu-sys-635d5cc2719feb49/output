@@ -1,0 +1,2 @@
+cargo:rustc-link-lib=dylib=opengl32
+cargo:rustc-link-lib=dylib=glu32

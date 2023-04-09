@@ -1,0 +1,11 @@
+[package]
+name = "cs545_prog1"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sdl2 = "*"  # Heavy lifter in the environment setup and event handling -- glut replacement
+gl = "*"    # Official Rust bindings but does not support legacy code -- OpenGL context and some windowing
+glu-sys = "0.1.4" # Raw GLU and GL Rust bindings -- support for legacy OpenGL
