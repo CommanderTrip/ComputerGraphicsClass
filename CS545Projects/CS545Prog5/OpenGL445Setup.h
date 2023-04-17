@@ -19,7 +19,7 @@ void my_3d_projection(int width, int height)
 	glViewport(0, 0, (GLfloat)width, (GLfloat)height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(90, 1, 10, 1010);
+	gluPerspective(90.0, 1.0, 10.0, 1010.0);
 	glMatrixMode(GL_MODELVIEW);
 }
 
